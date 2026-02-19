@@ -1,0 +1,793 @@
+openapi: 3.1.0
+info:
+  title: Expenses Tracker API
+  version: 1.0.0
+  description: >
+    REST API for the Expenses Tracker PWA. All authenticated endpoints require
+    a valid JWT access token delivered via HttpOnly cookie (set by POST /auth/login
+    or POST /auth/refresh). Clients must use credentials: 'include' on all requests.
+
+servers:
+  - url: http://localhost:4000
+    description: Local development
+  - url: https://api.expenses-tracker.fly.dev
+    description: Production (Fly.io)
+
+tags:
+  - name: auth
+    description: Authentication and session management
+  - name: expenses
+    description: Expense logging and retrieval
+  - name: categories
+    description: Expense categories (system defaults + custom)
+  - name: recurring
+    description: Recurring monthly expenses
+  - name: reports
+    description: Spending reports and aggregations
+  - name: account
+    description: Account info and member management
+
+# ---------------------------------------------------------------------------
+# Reusable components
+# ---------------------------------------------------------------------------
+components:
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: Unauthorized
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        icon:
+          type: string
+          example: utensils
+        iconColor:
+          type: string
+          example: "#EF4444"
+        isSystem:
+          type: boolean
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+          format: double
+          example: 42.50
+        date:
+          type: string
+          format: date
+          example: "2026-02-19"
+        category:
+          $ref: '#/components/schemas/Category'
+        createdBy:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+
+    RecurringExpense:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+          format: double
+          example: 9.99
+        label:
+          type: string
+          example: Netflix
+        category:
+          $ref: '#/components/schemas/Category'
+        activeFrom:
+          type: string
+          format: date
+          example: "2026-02-01"
+        deletedAt:
+          type: string
+          format: date
+          nullable: true
+
+    ReportMonthItem:
+      type: object
+      properties:
+        categoryId:
+          type: string
+        categoryTitle:
+          type: string
+        icon:
+          type: string
+        iconColor:
+          type: string
+        total:
+          type: number
+          format: double
+
+    ReportYearItem:
+      type: object
+      properties:
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+        label:
+          type: string
+          example: Feb
+        total:
+          type: number
+          format: double
+
+    AccountMember:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        joinedAt:
+          type: string
+          format: date-time
+
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountMember'
+        pendingInvitation:
+          type: object
+          nullable: true
+          properties:
+            invitedEmail:
+              type: string
+              format: email
+            expiresAt:
+              type: string
+              format: date-time
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Authenticated but not authorized for this resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Request body or parameters failed validation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    message:
+                      type: string
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Register a new user and create their account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '201':
+          description: User created; access + refresh tokens set as HttpOnly cookies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '409':
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Log in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful; access + refresh tokens set as HttpOnly cookies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Log out; clears auth cookies client-side
+      description: >
+        Clears the access_token and refresh_token HttpOnly cookies by setting Max-Age=0.
+        No server-side state is modified — auth is stateless. The access token remains
+        cryptographically valid until its TTL expires (≤15 min), which is the accepted
+        trade-off for stateless auth.
+      responses:
+        '204':
+          description: Logged out; cookies cleared
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Issue new access and refresh tokens using the current refresh token
+      description: >
+        Reads the refresh_token from the HttpOnly cookie. Verifies the JWT signature
+        and expiry (stateless — no DB lookup). Issues a new access token (≤15 min TTL)
+        and a new refresh token (30d TTL) as HttpOnly cookies. Returns 401 if the
+        refresh token is missing, expired, or has an invalid signature.
+      responses:
+        '200':
+          description: New access + refresh tokens set as HttpOnly cookies
+        '401':
+          description: Refresh token missing, expired, or invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Expenses ──────────────────────────────────────────────────────────────
+
+  /expenses:
+    get:
+      tags: [expenses]
+      summary: List expenses for the account
+      description: Returns expenses for the authenticated user's account, optionally filtered by date range.
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date (inclusive), ISO 8601
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date (inclusive), ISO 8601
+      responses:
+        '200':
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expenses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Expense'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [expenses]
+      summary: Log a new expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, date, categoryId]
+              properties:
+                amount:
+                  type: number
+                  format: double
+                  minimum: 0.01
+                  example: 42.50
+                date:
+                  type: string
+                  format: date
+                  description: Must not be a future date
+                  example: "2026-02-19"
+                categoryId:
+                  type: string
+      responses:
+        '201':
+          description: Expense created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /expenses/{id}:
+    delete:
+      tags: [expenses]
+      summary: Delete an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Expense deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Categories ────────────────────────────────────────────────────────────
+
+  /categories:
+    get:
+      tags: [categories]
+      summary: List categories available to the account
+      description: Returns all system-default categories plus the account's custom categories.
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [categories]
+      summary: Create a custom category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, icon, iconColor]
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                icon:
+                  type: string
+                  description: One of the predefined icon identifiers
+                  example: utensils
+                iconColor:
+                  type: string
+                  description: One of the predefined hex color values
+                  example: "#EF4444"
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Category title already exists in this account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /categories/{id}:
+    delete:
+      tags: [categories]
+      summary: Delete a custom category
+      description: Only account-owned (non-system) categories can be deleted.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Category deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Cannot delete a system category or a category belonging to another account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Recurring Expenses ────────────────────────────────────────────────────
+
+  /recurring:
+    get:
+      tags: [recurring]
+      summary: List recurring expenses for the account
+      description: Returns all active and deleted recurring expenses for the account.
+      responses:
+        '200':
+          description: List of recurring expenses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recurringExpenses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecurringExpense'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [recurring]
+      summary: Create a recurring monthly expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, label, categoryId]
+              properties:
+                amount:
+                  type: number
+                  format: double
+                  minimum: 0.01
+                  example: 9.99
+                label:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  example: Netflix
+                categoryId:
+                  type: string
+      responses:
+        '201':
+          description: Recurring expense created; active from current month
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringExpense'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /recurring/{id}:
+    delete:
+      tags: [recurring]
+      summary: Delete a recurring expense (soft delete)
+      description: >
+        Sets deletedAt to the first day of the current month. The recurring expense
+        continues to appear in historical reports for all months it was active.
+        Does NOT affect past month totals.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Recurring expense deactivated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Reports ───────────────────────────────────────────────────────────────
+
+  /reports/month:
+    get:
+      tags: [reports]
+      summary: Get spending by category for a specific month
+      description: >
+        Returns category totals (expenses + recurring expenses) for the given
+        month. Defaults to the current month.
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+            example: 2026
+        - name: month
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            example: 2
+      responses:
+        '200':
+          description: Monthly spending by category
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [month]
+                      year:
+                        type: integer
+                      month:
+                        type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReportMonthItem'
+                  total:
+                    type: number
+                    format: double
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /reports/year:
+    get:
+      tags: [reports]
+      summary: Get monthly spending aggregates for a specific year
+      description: >
+        Returns 12 monthly totals (all categories combined, expenses + recurring)
+        for the given year. Defaults to the current year.
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+            example: 2025
+      responses:
+        '200':
+          description: Yearly spending aggregated by month
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [year]
+                      year:
+                        type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReportYearItem'
+                  total:
+                    type: number
+                    format: double
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  # ── Account ───────────────────────────────────────────────────────────────
+
+  /account:
+    get:
+      tags: [account]
+      summary: Get the current account info and members
+      responses:
+        '200':
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /account/invite:
+    post:
+      tags: [account]
+      summary: Invite another user to share this account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '201':
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invitation sent to user@example.com
+        '400':
+          description: Account already has 2 members or pending invitation exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /account/invite/accept:
+    post:
+      tags: [account]
+      summary: Accept a shared-account invitation
+      description: >
+        The invitee calls this endpoint with the token received via email.
+        If the invitee does not yet have an account, they must register first.
+        Requires the invitee to be authenticated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: Invitation token from the email link
+      responses:
+        '200':
+          description: Invitation accepted; user moved to the shared account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Token invalid, expired, or account is full
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /account/members/{userId}:
+    delete:
+      tags: [account]
+      summary: Remove a member from the shared account
+      description: >
+        Either member can remove the other. The removed member loses access to all
+        account data immediately. Their personal data is moved to a new solo account.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Member removed
+        '400':
+          description: Cannot remove yourself (use logout) or user is not a member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
