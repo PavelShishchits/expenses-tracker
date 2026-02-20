@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  accountId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  account           Account            @relation(fields: [accountId], references: [id])
+  expenses          Expense[]
+  recurringExpenses RecurringExpense[]
+
+  @@map("users")
+}
+
+model Account {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users             User[]
+  categories        Category[]
+  expenses          Expense[]
+  recurringExpenses RecurringExpense[]
+  invitations       AccountInvitation[]
+
+  @@map("accounts")
+}
+
+model AccountInvitation {
+  id           String    @id @default(cuid())
+  accountId    String
+  invitedEmail String
+  token        String    @unique
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  account Account @relation(fields: [accountId], references: [id])
+
+  @@map("account_invitations")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  title     String
+  icon      String
+  iconColor String
+  isSystem  Boolean  @default(false)
+  accountId String?
+  createdAt DateTime @default(now())
+
+  account           Account?           @relation(fields: [accountId], references: [id])
+  expenses          Expense[]
+  recurringExpenses RecurringExpense[]
+
+  @@map("categories")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  accountId   String
+  categoryId  String
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  account   Account  @relation(fields: [accountId], references: [id])
+  category  Category @relation(fields: [categoryId], references: [id])
+  createdBy User     @relation(fields: [createdById], references: [id])
+
+  @@index([accountId, date])
+  @@map("expenses")
+}
+
+model RecurringExpense {
+  id          String    @id @default(cuid())
+  amount      Decimal   @db.Decimal(10, 2)
+  label       String
+  accountId   String
+  categoryId  String
+  createdById String
+  activeFrom  DateTime
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  account   Account  @relation(fields: [accountId], references: [id])
+  category  Category @relation(fields: [categoryId], references: [id])
+  createdBy User     @relation(fields: [createdById], references: [id])
+
+  @@index([accountId])
+  @@map("recurring_expenses")
+}
