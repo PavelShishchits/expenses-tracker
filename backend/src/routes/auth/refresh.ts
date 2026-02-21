@@ -1,12 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { verifyRefreshToken, signAccessToken, signRefreshToken } from '../../lib/jwt.js'
-
-const COOKIE_BASE = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
-  path: '/',
-} as const
+import { COOKIE_BASE } from '../../lib/cookies.js'
 
 const refreshRoute: FastifyPluginAsync = async (app) => {
   app.post('/refresh', async (request, reply) => {
@@ -32,7 +26,7 @@ const refreshRoute: FastifyPluginAsync = async (app) => {
       .setCookie('access_token', accessToken, { ...COOKIE_BASE })
       .setCookie('refresh_token', refreshToken, { ...COOKIE_BASE, maxAge: 2592000 })
       .status(200)
-      .send({})
+      .send({ user: { id: payload.sub, email: payload.email } })
   })
 }
 

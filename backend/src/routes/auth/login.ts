@@ -2,13 +2,7 @@ import type { FastifyPluginAsync } from 'fastify'
 import { loginSchema } from '@expenses-tracker/shared'
 import * as AuthService from '../../services/auth.service.js'
 import { signAccessToken, signRefreshToken } from '../../lib/jwt.js'
-
-const COOKIE_BASE = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
-  path: '/',
-} as const
+import { COOKIE_BASE } from '../../lib/cookies.js'
 
 const loginRoute: FastifyPluginAsync = async (app) => {
   app.post('/login', async (request, reply) => {
