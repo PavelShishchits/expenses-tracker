@@ -1,0 +1,35 @@
+import { type RegisterInput, type LoginInput } from '@expenses-tracker/shared'
+import { prisma } from '../lib/prisma.js'
+import { hashPassword, verifyPassword } from '../lib/password.js'
+
+function makeHttpError(message: string, statusCode: number): Error & { statusCode: number } {
+  const err = new Error(message) as Error & { statusCode: number }
+  err.statusCode = statusCode
+  return err
+}
+
+export async function register(input: RegisterInput) {
+  const existing = await prisma.user.findUnique({ where: { email: input.email } })
+  if (existing) throw makeHttpError('Email already in use', 409)
+
+  const passwordHash = await hashPassword(input.password)
+
+  const { passwordHash: _, ...user } = await prisma.$transaction(async (tx) => {
+    const account = await tx.account.create({ data: {} })
+    return tx.user.create({
+      data: { email: input.email, passwordHash, accountId: account.id },
+    })
+  })
+
+  return user
+}
+
+export async function login(input: LoginInput) {
+  const user = await prisma.user.findUnique({ where: { email: input.email } })
+  if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
+    throw makeHttpError('Invalid email or password', 401)
+  }
+
+  const { passwordHash: _, ...safeUser } = user
+  return safeUser
+}
