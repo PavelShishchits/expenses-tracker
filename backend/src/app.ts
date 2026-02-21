@@ -4,6 +4,9 @@ import { corsPlugin } from "./plugins/cors.js";
 import { helmetPlugin } from "./plugins/helmet.js";
 import { setupAuth } from "./plugins/auth.js";
 import authRoutes from "./routes/auth/index.js";
+import categoriesRoute from "./routes/categories/index.js";
+import expensesRoute from "./routes/expenses/index.js";
+import expenseByIdRoute from "./routes/expenses/[id].js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -30,6 +33,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.get("/health", async () => ({ status: "ok" }));
 
   await app.register(authRoutes, { prefix: '/auth' });
+  await app.register(categoriesRoute, { prefix: '/categories' });
+  await app.register(expensesRoute, { prefix: '/expenses' });
+  await app.register(expenseByIdRoute, { prefix: '/expenses' });
 
   return app;
 }
