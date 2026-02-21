@@ -40,8 +40,11 @@ export function useAuth(): AuthState {
   }
 
   async function logout(): Promise<void> {
-    await authLogout()
-    setUser(null)
+    try {
+      await authLogout()
+    } finally {
+      setUser(null)
+    }
   }
 
   return { user, isLoading, login, register, logout }
