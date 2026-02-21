@@ -27,7 +27,8 @@ export async function list(from?: string, to?: string): Promise<Expense[]> {
   if (to) params.set('to', to)
   const query = params.size > 0 ? `?${params.toString()}` : ''
   const res = await apiFetch(`/expenses${query}`)
-  return (await expectJson(res)) as Expense[]
+  const body = (await expectJson(res)) as { expenses: Expense[] }
+  return body.expenses
 }
 
 export async function create(input: CreateExpenseInput): Promise<Expense> {
@@ -36,7 +37,8 @@ export async function create(input: CreateExpenseInput): Promise<Expense> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
-  return (await expectJson(res)) as Expense
+  const body = (await expectJson(res)) as { expense: Expense }
+  return body.expense
 }
 
 export async function remove(id: string): Promise<void> {

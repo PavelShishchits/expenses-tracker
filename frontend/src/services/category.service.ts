@@ -18,5 +18,6 @@ async function expectJson(res: Response): Promise<unknown> {
 
 export async function list(): Promise<Category[]> {
   const res = await apiFetch('/categories')
-  return (await expectJson(res)) as Category[]
+  const body = (await expectJson(res)) as { categories: Category[] }
+  return body.categories
 }
