@@ -3,6 +3,7 @@ import { cookiesPlugin } from "./plugins/cookies.js";
 import { corsPlugin } from "./plugins/cors.js";
 import { helmetPlugin } from "./plugins/helmet.js";
 import { setupAuth } from "./plugins/auth.js";
+import authRoutes from "./routes/auth/index.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -28,7 +29,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   app.get("/health", async () => ({ status: "ok" }));
 
-  // Route groups registered here in Phase 3+
+  await app.register(authRoutes, { prefix: '/auth' });
 
   return app;
 }
