@@ -15,6 +15,12 @@ async function start(): Promise<void> {
 
   const app = await buildApp()
 
+  process.on('SIGTERM', async () => {
+    await app.close()
+    await prisma.$disconnect()
+    process.exit(0)
+  })
+
   try {
     await app.listen({ port: PORT, host: '0.0.0.0' })
   } catch (err) {
@@ -22,10 +28,5 @@ async function start(): Promise<void> {
     process.exit(1)
   }
 }
-
-process.on('SIGTERM', async () => {
-  await prisma.$disconnect()
-  process.exit(0)
-})
 
 start()

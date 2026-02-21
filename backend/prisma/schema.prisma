@@ -62,6 +62,7 @@ model Category {
   expenses          Expense[]
   recurringExpenses RecurringExpense[]
 
+  @@unique([title, isSystem, accountId])
   @@map("categories")
 }
 
