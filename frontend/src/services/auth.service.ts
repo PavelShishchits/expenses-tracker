@@ -4,7 +4,7 @@ import { apiFetch } from './api'
 export type AuthUser = {
   id: string
   email: string
-  createdAt: string
+  createdAt?: string
 }
 
 async function expectJson(res: Response): Promise<unknown> {
@@ -43,6 +43,6 @@ export async function logout(): Promise<void> {
 
 export async function refresh(): Promise<AuthUser> {
   const res = await apiFetch('/auth/refresh', { method: 'POST' })
-  const body = (await expectJson(res)) as { user: Pick<AuthUser, 'id' | 'email'> }
-  return { ...body.user, createdAt: '' }
+  const body = (await expectJson(res)) as { user: AuthUser }
+  return body.user
 }
