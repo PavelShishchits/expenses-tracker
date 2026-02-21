@@ -1,12 +1,7 @@
 import { type RegisterInput, type LoginInput } from '@expenses-tracker/shared'
 import { prisma } from '../lib/prisma.js'
 import { hashPassword, verifyPassword } from '../lib/password.js'
-
-function makeHttpError(message: string, statusCode: number): Error & { statusCode: number } {
-  const err = new Error(message) as Error & { statusCode: number }
-  err.statusCode = statusCode
-  return err
-}
+import { makeHttpError } from '../lib/errors.js'
 
 export async function register(input: RegisterInput) {
   const passwordHash = await hashPassword(input.password)

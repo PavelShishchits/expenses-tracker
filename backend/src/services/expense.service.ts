@@ -1,14 +1,15 @@
 import { type CreateExpenseInput } from '@expenses-tracker/shared'
 import { prisma } from '../lib/prisma.js'
-
-function makeHttpError(message: string, statusCode: number): Error & { statusCode: number } {
-  const err = new Error(message) as Error & { statusCode: number }
-  err.statusCode = statusCode
-  return err
-}
+import { makeHttpError } from '../lib/errors.js'
 
 const createdBySelect = {
-  omit: { passwordHash: true },
+  select: {
+    id: true,
+    email: true,
+    accountId: true,
+    createdAt: true,
+    updatedAt: true,
+  },
 } as const
 
 export async function create(accountId: string, userId: string, input: CreateExpenseInput) {
