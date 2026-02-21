@@ -9,12 +9,12 @@ function makeHttpError(message: string, statusCode: number): Error & { statusCod
 }
 
 export async function register(input: RegisterInput) {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } })
-  if (existing) throw makeHttpError('Email already in use', 409)
-
   const passwordHash = await hashPassword(input.password)
 
-  const { passwordHash: _, ...user } = await prisma.$transaction(async (tx) => {
+  const { passwordHash: _pw, ...user } = await prisma.$transaction(async (tx) => {
+    const existing = await tx.user.findUnique({ where: { email: input.email } })
+    if (existing) throw makeHttpError('Email already in use', 409)
+
     const account = await tx.account.create({ data: {} })
     return tx.user.create({
       data: { email: input.email, passwordHash, accountId: account.id },
@@ -30,6 +30,6 @@ export async function login(input: LoginInput) {
     throw makeHttpError('Invalid email or password', 401)
   }
 
-  const { passwordHash: _, ...safeUser } = user
+  const { passwordHash: _pw, ...safeUser } = user
   return safeUser
 }
