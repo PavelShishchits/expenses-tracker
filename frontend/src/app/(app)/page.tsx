@@ -12,6 +12,7 @@ export default function HomePage() {
   const [categoriesError, setCategoriesError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     listCategories()
@@ -23,9 +24,12 @@ export default function HomePage() {
   async function handleExpenseSubmit(data: { amount: number; date: string }) {
     if (!selectedCategory) return
     setIsSubmitting(true)
+    setSubmitError(null)
     try {
       await createExpense({ ...data, categoryId: selectedCategory.id })
       setSelectedCategory(null)
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to save expense')
     } finally {
       setIsSubmitting(false)
     }
@@ -58,6 +62,8 @@ export default function HomePage() {
               isSubmitting={isSubmitting}
             />
           )}
+
+          {submitError && <p className="mt-3 text-sm text-red-500">{submitError}</p>}
         </>
       )}
     </div>

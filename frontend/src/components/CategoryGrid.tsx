@@ -60,6 +60,7 @@ export default function CategoryGrid({ categories, selectedId, onSelect }: Props
           <button
             key={category.id}
             type="button"
+            aria-pressed={isSelected}
             onClick={() => onSelect(category)}
             className={[
               'flex flex-col items-center gap-2 rounded-xl p-3 transition-all',
