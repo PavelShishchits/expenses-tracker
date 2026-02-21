@@ -8,7 +8,9 @@ const categoriesRoute: FastifyPluginAsync = async (app) => {
       where: { id: request.user!.sub },
       select: { accountId: true },
     })
-    const categories = await CategoryService.list(dbUser!.accountId)
+    if (!dbUser) return reply.status(401).send({ error: 'Unauthorized' })
+
+    const categories = await CategoryService.list(dbUser.accountId)
     return reply.status(200).send({ categories })
   })
 }
