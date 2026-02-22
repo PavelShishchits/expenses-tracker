@@ -43,7 +43,11 @@ export default function RecurringExpenseForm({ categories, onSubmit, submitError
       return
     }
 
-    await onSubmit(result.data)
+    try {
+      await onSubmit(result.data)
+    } catch {
+      // parent's onSubmit handles error state; swallow to avoid unhandled rejection
+    }
   }
 
   return (

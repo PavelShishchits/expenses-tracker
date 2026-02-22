@@ -17,19 +17,6 @@ export default function RecurringPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formKey, setFormKey] = useState(0)
 
-  async function fetchData() {
-    try {
-      setFetchError(null)
-      const [cats, recurring] = await Promise.all([listCategories(), listRecurring()])
-      setCategories(cats)
-      setItems(recurring)
-    } catch (err) {
-      setFetchError(err instanceof Error ? err.message : 'Failed to load data')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   async function fetchRecurring() {
     try {
       const recurring = await listRecurring()
@@ -40,7 +27,23 @@ export default function RecurringPage() {
   }
 
   useEffect(() => {
-    fetchData()
+    let cancelled = false
+    async function load() {
+      try {
+        setFetchError(null)
+        const [cats, recurring] = await Promise.all([listCategories(), listRecurring()])
+        if (!cancelled) {
+          setCategories(cats)
+          setItems(recurring)
+        }
+      } catch (err) {
+        if (!cancelled) setFetchError(err instanceof Error ? err.message : 'Failed to load data')
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
   }, [])
 
   async function handleCreate(input: CreateRecurringInput) {
@@ -78,8 +81,9 @@ export default function RecurringPage() {
       )}
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
+        <div role="status" className="flex justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+          <span className="sr-only">Loading…</span>
         </div>
       ) : fetchError ? (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">

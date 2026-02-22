@@ -59,6 +59,7 @@ export default function RecurringExpenseList({ items, onDelete }: Props) {
               <button
                 type="button"
                 onClick={handleDelete}
+                aria-label={`Delete ${item.label}`}
                 className="shrink-0 rounded px-2 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
               >
                 Delete

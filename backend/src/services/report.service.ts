@@ -134,7 +134,7 @@ export async function getYear(accountId: string, year: number): Promise<YearRepo
 
   const data: MonthTotal[] = Array.from({ length: 12 }, (_, i) => ({
     month: i + 1,
-    label: MONTH_LABELS[i] as string,
+    label: MONTH_LABELS[i]!,
     total: monthTotals[i] ?? 0,
   }))
 
