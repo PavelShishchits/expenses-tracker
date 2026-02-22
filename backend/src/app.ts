@@ -8,6 +8,7 @@ import categoriesRoute from "./routes/categories/index.js";
 import categoryByIdRoute from "./routes/categories/[id].js";
 import expensesRoute from "./routes/expenses/index.js";
 import expenseByIdRoute from "./routes/expenses/[id].js";
+import reportsRoutes from "./routes/reports/index.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -38,6 +39,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(categoryByIdRoute, { prefix: '/categories' });
   await app.register(expensesRoute, { prefix: '/expenses' });
   await app.register(expenseByIdRoute, { prefix: '/expenses' });
+  await app.register(reportsRoutes, { prefix: '/reports' });
 
   return app;
 }
