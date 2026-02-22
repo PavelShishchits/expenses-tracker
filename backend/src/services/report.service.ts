@@ -70,17 +70,18 @@ export async function getYear(accountId: string, year: number): Promise<YearRepo
   const yearStart = new Date(Date.UTC(year, 0, 1))
   const yearEnd = new Date(Date.UTC(year + 1, 0, 1))
 
-  const rows = await prisma.$queryRaw<{ month: number; total: number }[]>`
-    SELECT EXTRACT(MONTH FROM date)::int AS month,
-           SUM(amount)::float AS total
-    FROM expenses
-    WHERE "accountId" = ${accountId}
-      AND date >= ${yearStart}
-      AND date < ${yearEnd}
-    GROUP BY EXTRACT(MONTH FROM date)
-  `
+  const expenses = await prisma.expense.findMany({
+    where: { accountId, date: { gte: yearStart, lt: yearEnd } },
+    select: { amount: true, date: true },
+  })
 
-  const totalsMap = new Map(rows.map((r) => [r.month, r.total]))
+  const monthTotals = new Array<number>(12).fill(0)
+  for (const exp of expenses) {
+    const m = exp.date.getUTCMonth() // 0-indexed
+    monthTotals[m] = (monthTotals[m] ?? 0) + exp.amount.toNumber()
+  }
+
+  const totalsMap = new Map(monthTotals.map((total, i) => [i + 1, total]))
 
   const data: MonthTotal[] = Array.from({ length: 12 }, (_, i) => ({
     month: i + 1,
