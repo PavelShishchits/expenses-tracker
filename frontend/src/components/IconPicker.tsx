@@ -1,5 +1,3 @@
-'use client'
-
 import { PREDEFINED_ICONS } from '@expenses-tracker/shared'
 import { ICON_MAP, type PredefinedIcon } from '@/lib/icons'
 

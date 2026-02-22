@@ -1,5 +1,3 @@
-'use client'
-
 import { Check } from 'lucide-react'
 import { PREDEFINED_COLORS } from '@expenses-tracker/shared'
 

@@ -49,6 +49,7 @@ export default function CategoriesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formKey, setFormKey] = useState(0)
 
@@ -83,11 +84,12 @@ export default function CategoriesPage() {
   }
 
   async function handleDelete(id: string) {
+    setDeleteError(null)
     try {
       await remove(id)
       await fetchCategories()
     } catch (err) {
-      setFetchError(err instanceof Error ? err.message : 'Failed to delete category')
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete category')
     }
   }
 
@@ -98,6 +100,12 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+
+      {deleteError && (
+        <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+          {deleteError}
+        </p>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-12">
