@@ -39,7 +39,9 @@ export default function RecurringExpenseList({ items, onDelete }: Props) {
 
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-gray-800">{item.label}</p>
-              {!item.category && (
+              {item.category ? (
+                <p className="text-xs text-gray-500">{item.category.title}</p>
+              ) : (
                 <p className="text-xs text-amber-600">(category deleted)</p>
               )}
               <p className="text-xs text-gray-500">Since {activeFrom}</p>
