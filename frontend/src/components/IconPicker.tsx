@@ -23,7 +23,9 @@ import {
 } from 'lucide-react'
 import { PREDEFINED_ICONS } from '@expenses-tracker/shared'
 
-const ICON_MAP: Record<string, LucideIcon> = {
+type PredefinedIcon = (typeof PREDEFINED_ICONS)[number]
+
+const ICON_MAP: Record<PredefinedIcon, LucideIcon> = {
   'shopping-cart': ShoppingCart,
   'utensils': Utensils,
   'car': Car,
@@ -45,16 +47,16 @@ const ICON_MAP: Record<string, LucideIcon> = {
 }
 
 type Props = {
-  value: string
+  value: PredefinedIcon
   color: string
-  onChange: (icon: string) => void
+  onChange: (icon: PredefinedIcon) => void
 }
 
 export default function IconPicker({ value, color, onChange }: Props) {
   return (
     <div className="grid grid-cols-6 gap-2 overflow-y-auto max-h-48">
       {PREDEFINED_ICONS.map((icon) => {
-        const Icon = ICON_MAP[icon] ?? Tag
+        const Icon = ICON_MAP[icon]
         const isSelected = value === icon
         return (
           <button

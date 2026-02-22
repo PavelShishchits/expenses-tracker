@@ -49,19 +49,20 @@ export async function create(accountId: string, input: CreateCategoryInput) {
 export async function remove(accountId: string, categoryId: string): Promise<void> {
   const category = await prisma.category.findUnique({
     where: { id: categoryId },
-    select: { id: true, isSystem: true, accountId: true },
+    select: {
+      id: true,
+      isSystem: true,
+      accountId: true,
+      _count: { select: { expenses: true, recurringExpenses: true } },
+    },
   })
 
-  if (!category) {
-    throw makeHttpError('Not found', 404)
-  }
+  if (!category) throw makeHttpError('Not found', 404)
+  if (category.isSystem) throw makeHttpError('Cannot delete system category', 403)
+  if (category.accountId !== accountId) throw makeHttpError('Forbidden', 403)
 
-  if (category.isSystem) {
-    throw makeHttpError('Cannot delete system category', 403)
-  }
-
-  if (category.accountId !== accountId) {
-    throw makeHttpError('Forbidden', 403)
+  if (category._count.expenses > 0 || category._count.recurringExpenses > 0) {
+    throw makeHttpError('Category has associated expenses and cannot be deleted', 409)
   }
 
   await prisma.category.delete({ where: { id: categoryId } })
