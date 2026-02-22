@@ -46,10 +46,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 type Props = {
   value: string
+  color: string
   onChange: (icon: string) => void
 }
 
-export default function IconPicker({ value, onChange }: Props) {
+export default function IconPicker({ value, color, onChange }: Props) {
   return (
     <div className="grid grid-cols-6 gap-2 overflow-y-auto max-h-48">
       {PREDEFINED_ICONS.map((icon) => {
@@ -63,16 +64,11 @@ export default function IconPicker({ value, onChange }: Props) {
             onClick={() => onChange(icon)}
             className={[
               'flex items-center justify-center rounded-lg p-2 transition-all',
-              isSelected
-                ? 'bg-blue-100 ring-2 ring-blue-500 ring-offset-1'
-                : 'hover:bg-gray-100',
+              isSelected ? 'bg-gray-100' : 'hover:bg-gray-100',
             ].join(' ')}
+            style={isSelected ? { outline: `2px solid ${color}`, outlineOffset: '2px' } : undefined}
           >
-            <Icon
-              size={20}
-              strokeWidth={1.8}
-              className={isSelected ? 'text-blue-600' : 'text-gray-500'}
-            />
+            <Icon size={20} strokeWidth={1.8} style={{ color }} />
           </button>
         )
       })}
