@@ -19,6 +19,7 @@ export default function RecurringPage() {
   const [formKey, setFormKey] = useState(0)
 
   async function fetchRecurring() {
+    setFetchError(null)
     try {
       const recurring = await listRecurring()
       setItems(recurring)

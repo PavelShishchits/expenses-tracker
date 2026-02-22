@@ -30,6 +30,7 @@ export default function Navigation() {
               <Link
                 key={href}
                 href={href}
+                aria-current={active ? 'page' : undefined}
                 className={`flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors ${
                   active ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -54,6 +55,7 @@ export default function Navigation() {
               <Link
                 key={href}
                 href={href}
+                aria-current={active ? 'page' : undefined}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active
                     ? 'bg-blue-50 text-blue-700'

@@ -2,12 +2,6 @@ FROM node:20-alpine AS base
 WORKDIR /app
 RUN npm install -g pnpm
 
-FROM base AS deps
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY backend/package.json ./backend/
-COPY shared/package.json ./shared/
-RUN pnpm install --frozen-lockfile --filter backend...
-
 FROM base AS builder
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY backend/package.json ./backend/
@@ -28,6 +22,7 @@ COPY shared/package.json ./shared/
 RUN pnpm install --frozen-lockfile --prod --filter backend...
 COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/backend/prisma ./backend/prisma
+COPY --from=builder /app/backend/prisma.config.ts ./backend/prisma.config.ts
 
 EXPOSE 4000
 WORKDIR /app/backend

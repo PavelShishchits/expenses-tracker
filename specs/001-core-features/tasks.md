@@ -183,15 +183,15 @@
 
 **Purpose**: PWA manifest, deployment config, navigation, error UX, and final validation.
 
-- [ ] T083 [P] Create Web App Manifest in `frontend/src/app/manifest.ts`: export `MetadataRoute.Manifest` with `name: 'Expenses Tracker'`, `short_name: 'Expenses'`, `start_url: '/'`, `display: 'standalone'`, `background_color: '#ffffff'`, `theme_color: '#3B82F6'`, `icons: [192×192, 512×512]`
-- [ ] T084 [P] Add placeholder app icon files to `frontend/public/`: `icon-192x192.png` and `icon-512x512.png` (placeholder PNGs at correct dimensions; replace with final assets before production deployment)
-- [ ] T085 [P] Create `backend/Dockerfile`: multi-stage build (base: node:20-alpine); copy source + prisma schema; run `npm ci --only=production`; run `prisma generate`; compile TypeScript to `dist/`; expose port 4000; CMD runs `prisma migrate deploy` then starts server
-- [ ] T086 [P] Create `backend/fly.toml`: app name, primary region, `internal_port = 4000`, health check `GET /health`, `auto_stop_machines = false` (always-on for free tier)
-- [ ] T087 Create GitHub Actions CI workflow in `.github/workflows/ci.yml`: on push + PR — `pnpm install`, type-check all workspaces (`tsc --noEmit`), lint, `pnpm --filter backend test`, `pnpm --filter frontend test`; cache `.pnpm-store`
-- [ ] T088 [P] Create `Navigation` component in `frontend/src/components/Navigation.tsx`: bottom tab bar on mobile, sidebar on desktop; links to Main (`/`), Reports (`/reports`), Categories (`/categories`), Recurring (`/recurring`), Account (`/account`); active route highlighted; integrate into `frontend/src/app/(app)/layout.tsx`
-- [ ] T089 [P] Add error boundary and not-found pages: `frontend/src/app/error.tsx` (client component with retry button), `frontend/src/app/not-found.tsx` (404 page with link home)
-- [ ] T090 [P] Create `LoadingSkeleton` component in `frontend/src/components/LoadingSkeleton.tsx`: pulse animation variants: `category-grid` (grid of grey tiles), `chart` (horizontal bars), `list` (stacked rows); use in reports, categories, and recurring pages during fetch
-- [ ] T091 Run quickstart.md happy path: register → login → log expense → check reports chart → verify manifest at `/.well-known/manifest.json` → verify `GET /health → 200`
+- [X] T083 [P] Create Web App Manifest in `frontend/src/app/manifest.ts`: export `MetadataRoute.Manifest` with `name: 'Expenses Tracker'`, `short_name: 'Expenses'`, `start_url: '/'`, `display: 'standalone'`, `background_color: '#ffffff'`, `theme_color: '#3B82F6'`, `icons: [192×192, 512×512]`
+- [X] T084 [P] Add placeholder app icon files to `frontend/public/`: `icon-192x192.png` and `icon-512x512.png` (placeholder PNGs at correct dimensions; replace with final assets before production deployment)
+- [X] T085 [P] Create `backend/Dockerfile`: multi-stage build (base: node:20-alpine); copy source + prisma schema; run `npm ci --only=production`; run `prisma generate`; compile TypeScript to `dist/`; expose port 4000; CMD runs `prisma migrate deploy` then starts server
+- [X] T086 [P] Create `backend/fly.toml`: app name, primary region, `internal_port = 4000`, health check `GET /health`, `auto_stop_machines = false` (always-on for free tier)
+- [X] T087 Create GitHub Actions CI workflow in `.github/workflows/ci.yml`: on push + PR — `pnpm install`, type-check all workspaces (`tsc --noEmit`), lint, `pnpm --filter backend test`, `pnpm --filter frontend test`; cache `.pnpm-store`
+- [X] T088 [P] Create `Navigation` component in `frontend/src/components/Navigation.tsx`: bottom tab bar on mobile, sidebar on desktop; links to Main (`/`), Reports (`/reports`), Categories (`/categories`), Recurring (`/recurring`), Account (`/account`); active route highlighted; integrate into `frontend/src/app/(app)/layout.tsx`
+- [X] T089 [P] Add error boundary and not-found pages: `frontend/src/app/error.tsx` (client component with retry button), `frontend/src/app/not-found.tsx` (404 page with link home)
+- [X] T090 [P] Create `LoadingSkeleton` component in `frontend/src/components/LoadingSkeleton.tsx`: pulse animation variants: `category-grid` (grid of grey tiles), `chart` (horizontal bars), `list` (stacked rows); use in reports, categories, and recurring pages during fetch
+- [X] T091 Run quickstart.md happy path: register → login → log expense → check reports chart → verify manifest at `/.well-known/manifest.json` → verify `GET /health → 200`
 
 ---
 
