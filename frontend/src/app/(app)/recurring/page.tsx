@@ -6,6 +6,7 @@ import { list as listCategories, type Category } from '@/services/category.servi
 import { list as listRecurring, create, remove, type RecurringExpense } from '@/services/recurring.service'
 import RecurringExpenseForm from '@/components/RecurringExpenseForm'
 import RecurringExpenseList from '@/components/RecurringExpenseList'
+import LoadingSkeleton from '@/components/LoadingSkeleton'
 
 export default function RecurringPage() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -81,10 +82,7 @@ export default function RecurringPage() {
       )}
 
       {isLoading ? (
-        <div role="status" className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <span className="sr-only">Loading…</span>
-        </div>
+        <LoadingSkeleton variant="list" />
       ) : fetchError ? (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
           {fetchError}

@@ -5,6 +5,7 @@ import PeriodSelector, { type Period } from '@/components/PeriodSelector'
 import MonthReport from '@/components/MonthReport'
 import YearReport from '@/components/YearReport'
 import { getMonth, getYear, type MonthReportData, type YearReportData } from '@/services/report.service'
+import LoadingSkeleton from '@/components/LoadingSkeleton'
 
 type Report = MonthReportData | YearReportData
 
@@ -53,9 +54,7 @@ export default function ReportsPage() {
       <PeriodSelector value={period} onChange={setPeriod} />
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-        </div>
+        <LoadingSkeleton variant="chart" />
       ) : error ? (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}

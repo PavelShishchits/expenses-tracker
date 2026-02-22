@@ -6,6 +6,7 @@ import { type CreateCategoryInput } from '@expenses-tracker/shared'
 import { list, create, remove, type Category } from '@/services/category.service'
 import { ICON_MAP } from '@/lib/icons'
 import CategoryForm from '@/components/CategoryForm'
+import LoadingSkeleton from '@/components/LoadingSkeleton'
 
 function CategoryRow({
   category,
@@ -108,9 +109,7 @@ export default function CategoriesPage() {
       )}
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-        </div>
+        <LoadingSkeleton variant="category-grid" />
       ) : fetchError ? (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
           {fetchError}
