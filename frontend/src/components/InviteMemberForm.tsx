@@ -38,8 +38,12 @@ export default function InviteMemberForm({
       return
     }
 
-    await onInvite(result.data)
-    setEmail('')
+    try {
+      await onInvite(result.data)
+      setEmail('')
+    } catch {
+      // parent's onInvite handles error state
+    }
   }
 
   if (pendingInvitation !== null) {

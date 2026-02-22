@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto'
+import { Prisma } from '@prisma/client'
 import { makeHttpError } from '../lib/errors.js'
 import { prisma } from '../lib/prisma.js'
 
@@ -24,29 +25,31 @@ export async function get(accountId: string) {
 }
 
 export async function invite(accountId: string, invitedEmail: string): Promise<string> {
-  const memberCount = await prisma.user.count({ where: { accountId } })
-  if (memberCount >= 2) {
-    throw makeHttpError('Account is already full', 400)
-  }
-
-  const existingInvitation = await prisma.accountInvitation.findFirst({
-    where: {
-      accountId,
-      acceptedAt: null,
-      expiresAt: { gt: new Date() },
-    },
-    select: { id: true },
-  })
-  if (existingInvitation) {
-    throw makeHttpError('A pending invitation already exists', 400)
-  }
-
   const token = randomBytes(32).toString('hex')
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
-  await prisma.accountInvitation.create({
-    data: { accountId, invitedEmail, token, expiresAt },
-  })
+  await prisma.$transaction(async (tx) => {
+    const memberCount = await tx.user.count({ where: { accountId } })
+    if (memberCount >= 2) {
+      throw makeHttpError('Account is already full', 400)
+    }
+
+    const existingInvitation = await tx.accountInvitation.findFirst({
+      where: {
+        accountId,
+        acceptedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      select: { id: true },
+    })
+    if (existingInvitation) {
+      throw makeHttpError('A pending invitation already exists', 400)
+    }
+
+    await tx.accountInvitation.create({
+      data: { accountId, invitedEmail, token, expiresAt },
+    })
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
 
   return token
 }
@@ -67,15 +70,15 @@ export async function acceptInvite(userId: string, token: string): Promise<void>
     throw makeHttpError('Invalid or expired invitation', 400)
   }
 
-  const memberCount = await prisma.user.count({ where: { accountId: invitation.accountId } })
-  if (memberCount >= 2) {
-    throw makeHttpError('Account is already full', 400)
-  }
+  await prisma.$transaction(async (tx) => {
+    const memberCount = await tx.user.count({ where: { accountId: invitation.accountId } })
+    if (memberCount >= 2) {
+      throw makeHttpError('Account is already full', 400)
+    }
 
-  await prisma.$transaction([
-    prisma.accountInvitation.update({ where: { token }, data: { acceptedAt: new Date() } }),
-    prisma.user.update({ where: { id: userId }, data: { accountId: invitation.accountId } }),
-  ])
+    await tx.accountInvitation.update({ where: { token }, data: { acceptedAt: new Date() } })
+    await tx.user.update({ where: { id: userId }, data: { accountId: invitation.accountId } })
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
 }
 
 export async function removeMember(

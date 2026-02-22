@@ -17,8 +17,12 @@ export default function AccountPage() {
   const [removeError, setRemoveError] = useState<string | null>(null)
 
   async function fetchAccountData() {
-    const data = await get()
-    setAccountData(data)
+    try {
+      const data = await get()
+      setAccountData(data)
+    } catch {
+      // background refetch — stale data remains visible
+    }
   }
 
   useEffect(() => {

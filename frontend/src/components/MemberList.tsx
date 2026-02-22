@@ -1,3 +1,5 @@
+'use client'
+
 import type { AccountMember } from '@/services/account.service'
 
 type Props = {
