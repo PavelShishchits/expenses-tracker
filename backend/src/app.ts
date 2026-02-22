@@ -5,6 +5,7 @@ import { helmetPlugin } from "./plugins/helmet.js";
 import { setupAuth } from "./plugins/auth.js";
 import authRoutes from "./routes/auth/index.js";
 import categoriesRoute from "./routes/categories/index.js";
+import categoryByIdRoute from "./routes/categories/[id].js";
 import expensesRoute from "./routes/expenses/index.js";
 import expenseByIdRoute from "./routes/expenses/[id].js";
 
@@ -34,6 +35,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await app.register(authRoutes, { prefix: '/auth' });
   await app.register(categoriesRoute, { prefix: '/categories' });
+  await app.register(categoryByIdRoute, { prefix: '/categories' });
   await app.register(expensesRoute, { prefix: '/expenses' });
   await app.register(expenseByIdRoute, { prefix: '/expenses' });
 
