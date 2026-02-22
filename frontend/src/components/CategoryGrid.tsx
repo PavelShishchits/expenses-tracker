@@ -1,48 +1,8 @@
 'use client'
 
-import {
-  ShoppingCart,
-  Utensils,
-  Car,
-  Home,
-  Heart,
-  Film,
-  Book,
-  Briefcase,
-  Coffee,
-  Gift,
-  Music,
-  Plane,
-  Dumbbell,
-  Wifi,
-  Phone,
-  Zap,
-  Star,
-  Tag,
-  type LucideIcon,
-} from 'lucide-react'
+import { Tag } from 'lucide-react'
 import { type Category } from '@/services/category.service'
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  'shopping-cart': ShoppingCart,
-  'utensils': Utensils,
-  'car': Car,
-  'home': Home,
-  'heart': Heart,
-  'film': Film,
-  'book': Book,
-  'briefcase': Briefcase,
-  'coffee': Coffee,
-  'gift': Gift,
-  'music': Music,
-  'plane': Plane,
-  'dumbbell': Dumbbell,
-  'wifi': Wifi,
-  'phone': Phone,
-  'zap': Zap,
-  'star': Star,
-  'tag': Tag,
-}
+import { ICON_MAP } from '@/lib/icons'
 
 type Props = {
   categories: Category[]
@@ -54,7 +14,7 @@ export default function CategoryGrid({ categories, selectedId, onSelect }: Props
   return (
     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
       {categories.map((category) => {
-        const Icon = ICON_MAP[category.icon] ?? Tag
+        const Icon = ICON_MAP[category.icon as keyof typeof ICON_MAP] ?? Tag
         const isSelected = category.id === selectedId
         return (
           <button

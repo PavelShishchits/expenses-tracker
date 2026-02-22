@@ -1,0 +1,45 @@
+import {
+  ShoppingCart,
+  Utensils,
+  Car,
+  Home,
+  Heart,
+  Film,
+  Book,
+  Briefcase,
+  Coffee,
+  Gift,
+  Music,
+  Plane,
+  Dumbbell,
+  Wifi,
+  Phone,
+  Zap,
+  Star,
+  Tag,
+  type LucideIcon,
+} from 'lucide-react'
+import { PREDEFINED_ICONS } from '@expenses-tracker/shared'
+
+export type PredefinedIcon = (typeof PREDEFINED_ICONS)[number]
+
+export const ICON_MAP: Record<PredefinedIcon, LucideIcon> = {
+  'shopping-cart': ShoppingCart,
+  'utensils': Utensils,
+  'car': Car,
+  'home': Home,
+  'heart': Heart,
+  'film': Film,
+  'book': Book,
+  'briefcase': Briefcase,
+  'coffee': Coffee,
+  'gift': Gift,
+  'music': Music,
+  'plane': Plane,
+  'dumbbell': Dumbbell,
+  'wifi': Wifi,
+  'phone': Phone,
+  'zap': Zap,
+  'star': Star,
+  'tag': Tag,
+}
