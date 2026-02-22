@@ -3,6 +3,7 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { type AuthUser } from '@/services/auth.service'
+import Navigation from '@/components/Navigation'
 
 type AppAuthContext = {
   user: AuthUser | null
@@ -37,8 +38,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <AuthContext.Provider value={{ user, isLoading, logout }}>
-      <div className="min-h-screen bg-gray-50">
-        <main className="container mx-auto max-w-2xl px-4 py-8">{children}</main>
+      <div className="flex min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="flex flex-1 flex-col min-h-screen">
+          <main className="flex-1 container mx-auto max-w-2xl px-4 py-8 pb-24 md:pb-8">
+            {children}
+          </main>
+        </div>
       </div>
     </AuthContext.Provider>
   )
